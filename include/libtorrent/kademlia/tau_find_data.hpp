@@ -70,7 +70,7 @@ struct tau_find_data : traversal_algorithm
 	//void got_write_token(node_id const& n, std::string write_token);
 
     // Modified by TAU community.
-    void got_write_token(observer_ptr o, std::string write_token);
+    void got_write_token(observer_ptr o, node_id const& n, std::string write_token);
 
 	void start() override;
 

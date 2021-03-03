@@ -699,6 +699,7 @@ KADEMLIA_SOURCES =
 	refresh
 	rpc_manager
 	find_data
+    tau_find_data
 	node_id
 	routing_table
 	traversal_algorithm
@@ -706,6 +707,7 @@ KADEMLIA_SOURCES =
 	get_peers
 	item
 	get_item
+    tau_get_item
 	put_data
 	ed25519
 	sample_infohashes

@@ -80,7 +80,7 @@ void tau_find_data_observer::reply(msg const& m)
 
         // Modified by TAU community.
         static_cast<tau_find_data*>(algorithm())->got_write_token(
-            this, token.string_value().to_string());
+            this->shared_from_this(), node_id(id.string_ptr()), token.string_value().to_string());
 	}
 
 	traversal_observer::reply(m);
@@ -149,7 +149,7 @@ void find_data::got_write_token(node_id const& n, std::string write_token)
 */
 
 // Modified by TAU community.
-void tau_find_data::got_write_token(observer_ptr o, std::string write_token)
+void tau_find_data::got_write_token(observer_ptr o, node_id const& n, std::string write_token)
 {
 #ifndef TORRENT_DISABLE_LOGGING
     auto logger = get_node().observer();
