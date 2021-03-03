@@ -182,7 +182,7 @@ routing_table::add_node_status_t replace_node_impl(node_entry const& e
 		, last_bucket, bucket_size_limit, e.id);
 
 	// nodes organized by their prefix
-	aux::array<std::vector<bucket_t::iterator>, 128> nodes_storage;
+	aux::array<std::vector<bucket_t::iterator>, 4096> nodes_storage;
 	auto const nodes = span<std::vector<bucket_t::iterator>>{nodes_storage}.first(bucket_size_limit);
 
 	for (j = b.begin(); j != b.end(); ++j)
@@ -270,7 +270,7 @@ int routing_table::bucket_limit(int bucket) const
 {
 	if (!m_settings.extended_routing_table) return m_bucket_size;
 
-	static const aux::array<int, 4> size_exceptions{{{16, 8, 4, 2}}};
+	static const aux::array<int, 4> size_exceptions{{{512, 8, 4, 2}}};
 	if (bucket < size_exceptions.end_index())
 		return m_bucket_size * size_exceptions[bucket];
 	return m_bucket_size;
@@ -829,7 +829,7 @@ ip_ok:
 	// if all nodes in the bucket, including the new node id (e.id) fall in the
 	// same bucket, splitting isn't going to do anything.
 	bool const can_split = (std::next(i) == m_buckets.end()
-		&& m_buckets.size() < 159)
+		&& m_buckets.size() < 1)
 		&& (m_settings.prefer_verified_node_ids == false
 			|| (e.verified && mostly_verified_nodes(b)))
 		&& e.confirmed()
