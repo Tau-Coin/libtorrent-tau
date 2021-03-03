@@ -61,6 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/kademlia/refresh.hpp"
 #include "libtorrent/kademlia/get_peers.hpp"
 #include "libtorrent/kademlia/get_item.hpp"
+#include "libtorrent/kademlia/tau_get_item.hpp"
 #include "libtorrent/kademlia/msg.hpp"
 #include <libtorrent/kademlia/put_data.hpp>
 #include <libtorrent/kademlia/sample_infohashes.hpp>
@@ -557,6 +558,7 @@ void node::put_item(sha1_hash const& target, entry const& data, std::function<vo
 	ta->start();
 }
 
+/*
 void node::put_item(public_key const& pk, std::string const& salt
 	, std::function<void(item const&, int)> f
 	, std::function<void(item&)> data_cb)
@@ -577,6 +579,107 @@ void node::put_item(public_key const& pk, std::string const& salt
 		, std::bind(&put, _1, put_ta));
 	ta->start();
 }
+*/
+
+// Added by TAU community start.
+namespace {
+
+    struct tau_put_item_ctx
+    {
+        explicit tau_put_item_ctx(std::function<void(item const&, int)> f)
+            : token_count(0)
+            , put_count(0)
+            , success(0)
+            , is_get_done(false)
+            , put_cb(std::move(f)) {}
+
+        // put callback with the success number
+        std::function<void(item const&, int)> put_cb;
+
+        int token_count;
+        // put done count
+        int put_count;
+        // success number
+        int success;
+        // get is done or not.
+        bool is_get_done;
+
+        std::shared_ptr<dht::tau_get_item> get_ta;
+
+        void set_get_task(std::shared_ptr<dht::tau_get_item> ta)
+        {
+            this->get_ta = ta;
+        }
+    };
+
+    void tau_put_data_cb(item const& i, bool auth
+        , std::shared_ptr<tau_put_item_ctx> ctx)
+    {
+        if (auth)
+        {
+            ctx->is_get_done = true;
+        }
+    }
+
+    void tau_put_done_cb(item const& value, int response
+        , std::shared_ptr<tau_put_item_ctx> ctx)
+    {
+        ++ctx->put_count;
+        ctx->success += response;
+        // if get is done and all put tasks are finished, trigger alert.
+        if (ctx->is_get_done && (ctx->token_count == ctx->put_count)) {
+            ctx->put_cb(value, ctx->success);
+        }
+    }
+
+    void tau_put_token_cb(std::pair<node_entry, std::string> const& ep
+        , std::shared_ptr<tau_put_item_ctx> ctx
+        , node* dht_node
+        , std::function<void(item&)> const& f)
+    {
+
+        ++ctx->token_count;
+
+        std::vector<std::pair<node_entry, std::string>> ep_vec;
+        ep_vec.push_back(ep);
+
+        // create put task and start
+        auto put_ta = std::make_shared<dht::put_data>(*dht_node,
+            std::bind(&tau_put_done_cb, _1, _2, ctx));
+
+        item copy = ctx->get_ta->get_item();
+        f(copy);
+        put_ta->set_data(std::move(copy));
+        put_ta->set_targets(ep_vec);
+        put_ta->start();
+    }
+
+} // namespace
+
+void node::put_item(public_key const& pk, std::string const& salt
+    , std::function<void(item const&, int)> f
+    , std::function<void(item&)> data_cb)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+    if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+    {
+        char hex_key[65];
+        aux::to_hex(pk.bytes, hex_key);
+        m_observer->log(dht_logger::node, "starting put for [ key: %s ]", hex_key);
+    }
+#endif
+
+    auto ctx = std::make_shared<tau_put_item_ctx>(f);
+
+    auto ta = std::make_shared<dht::tau_get_item>(*this, pk, salt
+        , std::bind(&tau_put_data_cb, _1, _2, ctx)
+        , tau_find_data::nodes_callback()
+        , std::bind(&tau_put_token_cb, _1, ctx, this, data_cb));
+
+    ctx->set_get_task(ta);
+    ta->start();
+}
+// Added by TAU community end.
 
 void node::sample_infohashes(udp::endpoint const& ep, sha1_hash const& target
 	, std::function<void(time_duration

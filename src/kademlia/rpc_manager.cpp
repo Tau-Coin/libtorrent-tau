@@ -37,12 +37,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <libtorrent/kademlia/rpc_manager.hpp>
 #include <libtorrent/kademlia/routing_table.hpp>
 #include <libtorrent/kademlia/find_data.hpp>
+#include <libtorrent/kademlia/tau_find_data.hpp>
 #include <libtorrent/kademlia/put_data.hpp>
 #include <libtorrent/kademlia/refresh.hpp>
 #include <libtorrent/kademlia/node.hpp>
 #include <libtorrent/kademlia/dht_observer.hpp>
 #include <libtorrent/kademlia/direct_request.hpp>
 #include <libtorrent/kademlia/get_item.hpp>
+#include <libtorrent/kademlia/tau_get_item.hpp>
 #include <libtorrent/kademlia/sample_infohashes.hpp>
 #include <libtorrent/kademlia/dht_settings.hpp>
 
@@ -144,10 +146,12 @@ void observer::set_id(node_id const& id)
 
 using observer_storage = aux::aligned_union<1
 	, find_data_observer
+    , tau_find_data_observer
 	, announce_observer
 	, put_data_observer
 	, direct_observer
 	, get_item_observer
+    , tau_get_item_observer
 	, get_peers_observer
 	, obfuscated_get_peers_observer
 	, sample_infohashes_observer
