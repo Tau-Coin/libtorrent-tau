@@ -586,15 +586,20 @@ namespace {
 
     struct tau_put_item_ctx
     {
-        explicit tau_put_item_ctx(std::function<void(item const&, int)> f)
+        explicit tau_put_item_ctx(std::function<void(item const&, int)> f
+            , std::function<void(item&)> dcb)
             : token_count(0)
             , put_count(0)
             , success(0)
             , is_get_done(false)
-            , put_cb(std::move(f)) {}
+            , is_put_done(false)
+            , put_cb(std::move(f))
+            , data_cb(std::move(dcb)) {}
 
         // put callback with the success number
         std::function<void(item const&, int)> put_cb;
+
+        std::function<void(item&)> data_cb;
 
         int token_count;
         // put done count
@@ -603,6 +608,8 @@ namespace {
         int success;
         // get is done or not.
         bool is_get_done;
+        // only true when put alert is triggered.
+        bool is_put_done;
 
         std::shared_ptr<dht::tau_get_item> get_ta;
 
@@ -618,6 +625,15 @@ namespace {
         if (auth)
         {
             ctx->is_get_done = true;
+
+            // if get is done and all put tasks are finished, trigger alert.
+            if (!ctx->is_put_done && (ctx->token_count == ctx->put_count)) {
+                ctx->is_put_done = true;
+
+                item value(i);
+                ctx->data_cb(value);
+                ctx->put_cb(value, ctx->success);
+            }
         }
     }
 
@@ -627,15 +643,16 @@ namespace {
         ++ctx->put_count;
         ctx->success += response;
         // if get is done and all put tasks are finished, trigger alert.
-        if (ctx->is_get_done && (ctx->token_count == ctx->put_count)) {
+        if (ctx->is_get_done && !ctx->is_put_done
+            && (ctx->token_count == ctx->put_count)) {
+            ctx->is_put_done = true;
             ctx->put_cb(value, ctx->success);
         }
     }
 
     void tau_put_token_cb(std::pair<node_entry, std::string> const& ep
         , std::shared_ptr<tau_put_item_ctx> ctx
-        , node* dht_node
-        , std::function<void(item&)> const& f)
+        , node* dht_node)
     {
 
         ++ctx->token_count;
@@ -648,9 +665,14 @@ namespace {
             std::bind(&tau_put_done_cb, _1, _2, ctx));
 
         item copy = ctx->get_ta->get_item();
-        f(copy);
+        ctx->data_cb(copy);
         put_ta->set_data(std::move(copy));
         put_ta->set_targets(ep_vec);
+
+#ifndef TORRENT_DISABLE_LOGGING
+        dht_node->observer()->log(dht_logger::node, "put task [%u] starts for get task [%u]"
+            , put_ta->id(), ctx->get_ta->id());
+#endif
         put_ta->start();
     }
 
@@ -669,12 +691,12 @@ void node::put_item(public_key const& pk, std::string const& salt
     }
 #endif
 
-    auto ctx = std::make_shared<tau_put_item_ctx>(f);
+    auto ctx = std::make_shared<tau_put_item_ctx>(f, data_cb);
 
     auto ta = std::make_shared<dht::tau_get_item>(*this, pk, salt
         , std::bind(&tau_put_data_cb, _1, _2, ctx)
         , tau_find_data::nodes_callback()
-        , std::bind(&tau_put_token_cb, _1, ctx, this, data_cb));
+        , std::bind(&tau_put_token_cb, _1, ctx, this));
 
     ctx->set_get_task(ta);
     ta->start();
