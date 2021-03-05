@@ -509,8 +509,9 @@ void node::get_item(public_key const& pk, std::string const& salt
 	}
 #endif
 
-	auto ta = std::make_shared<dht::get_item>(*this, pk, salt, f
-		, find_data::nodes_callback());
+	auto ta = std::make_shared<dht::tau_get_item>(*this, pk, salt, f
+		, tau_find_data::nodes_callback()
+        , tau_find_data::token_callback());
 	ta->start();
 }
 

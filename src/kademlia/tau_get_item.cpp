@@ -95,8 +95,16 @@ void tau_get_item::got_data(bdecode_node const& v,
 		// time-out (15 seconds).
 		// for put_item, the callback function will do nothing
 		// if the data is non-authoritative.
-		m_data_callback(m_data, false);
+		// m_data_callback(m_data, false);
 	}
+
+    // Added by TAU community.
+    // call data callback anyway.
+    item mutable_data;
+    if (mutable_data.assign(v, salt_copy, seq, pk, sig) && !mutable_data.empty())
+    {
+        m_data_callback(mutable_data, false);
+    }
 }
 
 tau_get_item::tau_get_item(
