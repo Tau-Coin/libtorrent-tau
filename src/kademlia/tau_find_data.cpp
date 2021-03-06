@@ -161,7 +161,9 @@ void tau_find_data::got_write_token(observer_ptr o, node_id const& n, std::strin
             , aux::to_hex(o->id()).c_str());
     }
 #endif
-    m_token_callback(std::make_pair(node_entry(o->id(), o->target_ep()), write_token));
+    if (m_token_callback) {
+        m_token_callback(std::make_pair(node_entry(o->id(), o->target_ep()), write_token));
+    }
 
     m_write_tokens[n] = std::move(write_token);
 }

@@ -100,10 +100,13 @@ void tau_get_item::got_data(bdecode_node const& v,
 
     // Added by TAU community.
     // call data callback anyway.
-    item mutable_data;
-    if (mutable_data.assign(v, salt_copy, seq, pk, sig) && !mutable_data.empty())
+    item mutable_data(pk, salt_copy);
+    if (mutable_data.assign(v, salt_copy, seq, pk, sig))
     {
-        m_data_callback(mutable_data, false);
+        if (!mutable_data.empty())
+        {
+            m_data_callback(mutable_data, false);
+        }
     }
 }
 
