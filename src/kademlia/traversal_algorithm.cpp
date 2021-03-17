@@ -519,10 +519,11 @@ bool traversal_algorithm::add_requests()
 		{
 			logger->log(dht_logger::traversal
 				, "[%u] INVOKE nodes-left: %d top-invoke-count: %d "
-				"invoke-count: %d branch-factor: %d "
+				"invoke-count: %d branch-factor: %d  results_target: %d"
 				"distance: %d id: %s addr: %s type: %s"
 				, m_id, int(m_results.end() - i), outstanding, int(m_invoke_count)
-				, int(m_branch_factor), distance_exp(m_target, o->id()), aux::to_hex(o->id()).c_str()
+				, int(m_branch_factor), results_target
+                , distance_exp(m_target, o->id()), aux::to_hex(o->id()).c_str()
 				, print_address(o->target_addr()).c_str(), name());
 		}
 #endif
