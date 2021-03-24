@@ -216,7 +216,8 @@ bool tau_find_data::add_requests()
 
     // if invoke count is 0, it means we didn't even find 'k'
     // working nodes, we still have to terminate though.
-    return outstanding == 0 || m_invoke_count == 0;
+    return (outstanding == 0 && (m_responses + m_timeouts >= m_invoke_count))
+            || m_invoke_count == 0;
 }
 
 void tau_find_data::finished(observer_ptr o)
