@@ -72,12 +72,17 @@ struct tau_find_data : traversal_algorithm
     // Modified by TAU community.
     void got_write_token(observer_ptr o, node_id const& n, std::string write_token);
 
+    void finished(observer_ptr o) override;
+
+    void failed(observer_ptr o, traversal_flags_t flags = {}) override;
+
 	void start() override;
 
 	char const* name() const override;
 
 protected:
 
+    bool add_requests() override;
 	void done() override;
 	observer_ptr new_observer(udp::endpoint const& ep
 		, node_id const& id) override;

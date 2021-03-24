@@ -59,12 +59,18 @@ struct TORRENT_EXTRA_EXPORT traversal_algorithm
 	: std::enable_shared_from_this<traversal_algorithm>
 {
 	void traverse(node_id const& id, udp::endpoint const& addr);
-	void finished(observer_ptr o);
+
+    // Modified by TAU community.
+    virtual void finished(observer_ptr o);
+	// void finished(observer_ptr o);
 
 	static constexpr traversal_flags_t prevent_request = 0_bit;
 	static constexpr traversal_flags_t short_timeout = 1_bit;
 
-	void failed(observer_ptr o, traversal_flags_t flags = {});
+    // Modified by TAU community.
+    virtual void failed(observer_ptr o, traversal_flags_t flags = {});
+	// void failed(observer_ptr o, traversal_flags_t flags = {});
+
 	virtual ~traversal_algorithm();
 	void status(dht_lookup& l);
 
@@ -94,7 +100,9 @@ protected:
 	{ return shared_from_this(); }
 
 	// returns true if we're done
-	bool add_requests();
+    // Modified by TAU community.
+    virtual bool add_requests();
+	// bool add_requests();
 
 	void add_router_entries();
 	void init();
@@ -121,34 +129,39 @@ protected:
 
 	int num_sorted_results() const { return m_sorted_results; }
 
+    // Modified by TAU community.
+
+    node_id const m_target;
+    std::int8_t m_invoke_count = 0;
+    std::int8_t m_branch_factor = 3;
+
+    std::int16_t m_responses = 0;
+    std::int16_t m_timeouts = 0;
+
+    // set to true when done() is called, and will prevent adding new results, as
+    // they would never be serviced and the whole traversal algorithm would stall
+    // and leak
+    bool m_done = false;
+
+#ifndef TORRENT_DISABLE_LOGGING
+    // this is a unique ID for this specific traversal_algorithm instance,
+    // just used for logging
+    std::uint32_t m_id;
+#endif
+
+#ifndef TORRENT_DISABLE_LOGGING
+    void log_timeout(observer_ptr const& o, char const* prefix) const;
+#endif
+
 private:
 
-	node_id const m_target;
-	std::int8_t m_invoke_count = 0;
-	std::int8_t m_branch_factor = 3;
 	// the number of elements at the beginning of m_results that are sorted by
 	// node_id.
 	std::int8_t m_sorted_results = 0;
-	std::int16_t m_responses = 0;
-	std::int16_t m_timeouts = 0;
-
-	// set to true when done() is called, and will prevent adding new results, as
-	// they would never be serviced and the whole traversal algorithm would stall
-	// and leak
-	bool m_done = false;
-
-#ifndef TORRENT_DISABLE_LOGGING
-	// this is a unique ID for this specific traversal_algorithm instance,
-	// just used for logging
-	std::uint32_t m_id;
-#endif
 
 	// the IP addresses of the nodes in m_results
 	std::set<std::uint32_t> m_peer4_prefixes;
 	std::set<std::uint64_t> m_peer6_prefixes;
-#ifndef TORRENT_DISABLE_LOGGING
-	void log_timeout(observer_ptr const& o, char const* prefix) const;
-#endif
 };
 
 void look_for_nodes(char const* nodes_key, udp const& protocol
