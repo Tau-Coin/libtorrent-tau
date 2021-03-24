@@ -75,7 +75,7 @@ namespace {
 // the write tokens we generate are 4 bytes
 constexpr int write_token_size = 4;
 
-void nop() {}
+//void nop() {}
 
 node_id calculate_node_id(node_id const& nid, aux::listen_socket_handle const& sock)
 {
@@ -523,7 +523,7 @@ void put(std::vector<std::pair<node_entry, std::string>> const& nodes
 	ta->set_targets(nodes);
 	ta->start();
 }
-
+/*
 void put_data_cb(item const& i, bool auth
 	, std::shared_ptr<put_data> const& ta
 	, std::function<void(item&)> const& f)
@@ -536,6 +536,7 @@ void put_data_cb(item const& i, bool auth
 		ta->set_data(std::move(copy));
 	}
 }
+*/
 
 } // namespace
 
@@ -597,11 +598,6 @@ namespace {
             , put_cb(std::move(f))
             , data_cb(std::move(dcb)) {}
 
-        // put callback with the success number
-        std::function<void(item const&, int)> put_cb;
-
-        std::function<void(item&)> data_cb;
-
         int token_count;
         // put done count
         int put_count;
@@ -611,6 +607,11 @@ namespace {
         bool is_get_done;
         // only true when put alert is triggered.
         bool is_put_done;
+
+        // put callback with the success number
+        std::function<void(item const&, int)> put_cb;
+
+        std::function<void(item&)> data_cb;
 
         std::shared_ptr<dht::tau_get_item> get_ta;
 
