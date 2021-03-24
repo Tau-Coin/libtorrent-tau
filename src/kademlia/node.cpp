@@ -773,6 +773,7 @@ void node::tick()
 	// expanding the routing table buckets closer to us.
 	// if m_table.depth() < 4, means routing_table doesn't
 	// have enough nodes.
+    /*
 	time_point const now = aux::time_now();
 	if (m_last_self_refresh + minutes(10) < now && m_table.depth() < 4)
 	{
@@ -783,7 +784,7 @@ void node::tick()
 		m_last_self_refresh = now;
 		return;
 	}
-
+    */
 	node_entry const* ne = m_table.next_refresh();
 	if (ne == nullptr) return;
 
@@ -810,32 +811,51 @@ void node::send_single_refresh(udp::endpoint const& ep, int const bucket
 	node_id target = generate_secret_id() & ~mask;
 	target |= m_id & mask;
 
-	// create a dummy traversal_algorithm
-	auto algo = std::make_shared<traversal_algorithm>(*this, node_id());
-	auto o = m_rpc.allocate_observer<ping_observer>(std::move(algo), ep, id);
-	if (!o) return;
-#if TORRENT_USE_ASSERTS
-	o->m_in_constructor = false;
+#ifndef TORRENT_DISABLE_LOGGING
+	if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	{
+		m_observer->log(dht_logger::node, "send single refresh bucket num: %d, active size: %d, nodes size: %d"
+			, bucket, m_table.num_active_buckets(), m_table.bucket_limit(bucket));
+	}
 #endif
-	entry e;
-	e["y"] = "q";
 
+    /*
 	if (m_table.is_full(bucket))
 	{
 		// current bucket is full, just ping it.
 		e["q"] = "ping";
 		m_counters.inc_stats_counter(counters::dht_ping_out);
 	}
-	else
+    */
+    int k_size = std::min(m_table.bucket_limit(bucket), 16);
+
+	if (m_table.bucket_size(bucket) < k_size)
 	{
 		// use get_peers instead of find_node. We'll get nodes in the response
 		// either way.
+#ifndef TORRENT_DISABLE_LOGGING
+	    if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+	    {
+		    m_observer->log(dht_logger::node, "send single refresh bucket k-size: %d"
+			    , k_size);
+	    }
+#endif
+	    // create a dummy traversal_algorithm
+	    auto algo = std::make_shared<traversal_algorithm>(*this, node_id());
+	    auto o = m_rpc.allocate_observer<ping_observer>(std::move(algo), ep, id);
+	    if (!o) return;
+#if TORRENT_USE_ASSERTS
+	    o->m_in_constructor = false;
+#endif
+	    entry e;
+	    e["y"] = "q";
 		e["q"] = "get_peers";
 		e["a"]["info_hash"] = target.to_string();
 		m_counters.inc_stats_counter(counters::dht_get_peers_out);
+	    m_rpc.invoke(e, ep, o);
 	}
 
-	m_rpc.invoke(e, ep, o);
+	//m_rpc.invoke(e, ep, o);
 }
 
 time_duration node::connection_timeout()
