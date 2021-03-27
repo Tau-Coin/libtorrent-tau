@@ -774,7 +774,7 @@ void node::tick()
 	// expanding the routing table buckets closer to us.
 	// if m_table.depth() < 4, means routing_table doesn't
 	// have enough nodes.
-    /*
+    /* TAU community modified
 	time_point const now = aux::time_now();
 	if (m_last_self_refresh + minutes(10) < now && m_table.depth() < 4)
 	{
@@ -820,7 +820,7 @@ void node::send_single_refresh(udp::endpoint const& ep, int const bucket
 	}
 #endif
 
-    /*
+    /* TAU community modified
 	if (m_table.is_full(bucket))
 	{
 		// current bucket is full, just ping it.
@@ -968,8 +968,10 @@ void node::incoming_request(msg const& m, entry& e)
 		return;
 	}
 
+	/* TAU community modified
 	if (!read_only)
 		m_table.heard_about(id, m.addr);
+	*/
 
 	entry& reply = e["r"];
 	m_rpc.add_our_id(reply);
@@ -981,6 +983,10 @@ void node::incoming_request(msg const& m, entry& e)
 
 	if (m_observer && m_observer->on_dht_request(query, m, e))
 		return;
+
+	// TAU community modified
+	if (!read_only && ((query == "put")||(query == "get")))
+		m_table.heard_about(id, m.addr);
 
 	if (query == "ping")
 	{
