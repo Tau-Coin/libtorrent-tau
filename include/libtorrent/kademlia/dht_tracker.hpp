@@ -135,7 +135,9 @@ namespace libtorrent { namespace dht {
 		// the cb is same as put immutable_item.
 		void put_item(public_key const& key
 			, std::function<void(item const&, int)> cb
-			, std::function<void(item&)> data_cb, std::string salt = std::string());
+			, std::function<void(item&)> data_cb
+			, std::string salt = std::string()
+			, int branch_factor = 5);
 
 		// send an arbitrary DHT request directly to a node
 		void direct_request(udp::endpoint const& ep, entry& e

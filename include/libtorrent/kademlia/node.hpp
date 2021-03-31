@@ -151,7 +151,8 @@ public:
 	void put_item(sha1_hash const& target, entry const& data, std::function<void(int)> f);
 	void put_item(public_key const& pk, std::string const& salt
 		, std::function<void(item const&, int)> f
-		, std::function<void(item&)> data_cb);
+		, std::function<void(item&)> data_cb
+		, int branch_factor = 5);
 
 	void sample_infohashes(udp::endpoint const& ep, sha1_hash const& target
 		, std::function<void(time_duration

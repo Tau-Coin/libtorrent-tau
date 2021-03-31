@@ -682,7 +682,8 @@ namespace {
 
 void node::put_item(public_key const& pk, std::string const& salt
     , std::function<void(item const&, int)> f
-    , std::function<void(item&)> data_cb)
+    , std::function<void(item&)> data_cb
+	, int branch_factor)
 {
 #ifndef TORRENT_DISABLE_LOGGING
     if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
@@ -701,6 +702,7 @@ void node::put_item(public_key const& pk, std::string const& salt
         , std::bind(&tau_put_token_cb, _1, ctx, this));
 
     ctx->set_get_task(ta);
+    ta->set_branch_factor(branch_factor);
     ta->start();
 }
 // Added by TAU community end.

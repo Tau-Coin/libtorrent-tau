@@ -489,7 +489,8 @@ namespace aux {
 			void dht_put_mutable_item(std::array<char, 32> key
 				, std::function<void(entry&, std::array<char,64>&
 					, std::int64_t&, std::string const&)> cb
-				, std::string salt = std::string());
+				, std::string salt = std::string()
+				, int branch_factor = 5);
 
 			void dht_get_peers(sha1_hash const& info_hash);
 			void dht_announce(sha1_hash const& info_hash, int port = 0, dht::announce_flags_t flags = {});

@@ -110,14 +110,16 @@ tau_find_data::tau_find_data(
     , m_token_callback(std::move(tcallback))
     , m_done(false)
 {
+    init();
 }
 
+void tau_find_data::set_branch_factor(int branch_factor)
+{
+     m_branch_factor = aux::numeric_cast<std::int8_t>(branch_factor);
+}
 
 void tau_find_data::start()
 {
-    // first of all, init 'm_branch_factor'
-    init();
-
     // if the user didn't add seed-nodes manually, grab alpha
     // nodes from routing table.
     if (m_results.empty())

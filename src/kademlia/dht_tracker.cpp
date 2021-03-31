@@ -459,12 +459,12 @@ namespace libtorrent { namespace dht {
 
 	void dht_tracker::put_item(public_key const& key
 		, std::function<void(item const&, int)> cb
-		, std::function<void(item&)> data_cb, std::string salt)
+		, std::function<void(item&)> data_cb, std::string salt, int branch_factor)
 	{
 		auto ctx = std::make_shared<put_item_ctx>(int(m_nodes.size()));
 		for (auto& n : m_nodes)
 			n.second.dht.put_item(key, salt, std::bind(&put_mutable_item_callback
-				, _1, _2, ctx, cb), data_cb);
+				, _1, _2, ctx, cb), data_cb, branch_factor);
 	}
 
 	void dht_tracker::direct_request(udp::endpoint const& ep, entry& e

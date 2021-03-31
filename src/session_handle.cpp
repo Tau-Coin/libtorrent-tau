@@ -639,10 +639,11 @@ namespace {
 	void session_handle::dht_put_item(std::array<char, 32> key
 		, std::function<void(entry&, std::array<char,64>&
 			, std::int64_t&, std::string const&)> cb
-		, std::string salt)
+		, std::string salt
+		, int branch_factor)
 	{
 #ifndef TORRENT_DISABLE_DHT
-		async_call(&session_impl::dht_put_mutable_item, key, cb, salt);
+		async_call(&session_impl::dht_put_mutable_item, key, cb, salt, branch_factor);
 #else
 		TORRENT_UNUSED(key);
 		TORRENT_UNUSED(cb);

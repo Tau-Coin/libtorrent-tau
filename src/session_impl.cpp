@@ -6085,12 +6085,13 @@ namespace {
 	void session_impl::dht_put_mutable_item(std::array<char, 32> key
 		, std::function<void(entry&, std::array<char,64>&
 		, std::int64_t&, std::string const&)> cb
-		, std::string salt)
+		, std::string salt
+		, int branch_factor)
 	{
 		if (!m_dht) return;
 		m_dht->put_item(dht::public_key(key.data())
 			, std::bind(&on_dht_put_mutable_item, std::ref(m_alerts), _1, _2)
-			, std::bind(&put_mutable_callback, _1, std::move(cb)), salt);
+			, std::bind(&put_mutable_callback, _1, std::move(cb)), salt, branch_factor);
 	}
 
 	void session_impl::dht_get_peers(sha1_hash const& info_hash)

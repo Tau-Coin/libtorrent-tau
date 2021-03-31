@@ -469,7 +469,8 @@ namespace libtorrent {
 		void dht_put_item(std::array<char, 32> key
 			, std::function<void(entry&, std::array<char, 64>&
 				, std::int64_t&, std::string const&)> cb
-			, std::string salt = std::string());
+			, std::string salt = std::string()
+			, int branch_factor = 5);
 
 		// ``dht_get_peers()`` will issue a DHT get_peer request to the DHT for the
 		// specified info-hash. The response (the peers) will be posted back in a
