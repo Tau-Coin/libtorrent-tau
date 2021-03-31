@@ -139,7 +139,7 @@ void tau_find_data::start()
 
     // in case the routing table is empty, use the
     // router nodes in the table
-    if (m_results.size() < m_branch_factor)
+    if (aux::numeric_cast<std::int8_t>(m_results.size()) < m_branch_factor)
     {
         add_router_entries();
     }
@@ -220,6 +220,9 @@ bool tau_find_data::add_requests()
     // working nodes, we still have to terminate though.
     return (outstanding == 0 && (m_responses + m_timeouts >= 2 * m_branch_factor))
             || (outstanding == 0 && m_invoke_count != 0 && m_timeouts == m_invoke_count)
+            || (outstanding == 0 && m_invoke_count != 0
+                    && (m_responses + m_timeouts
+                            == aux::numeric_cast<std::int16_t>(m_results.size())))
             || m_invoke_count == 0;
 }
 
