@@ -169,7 +169,7 @@ bool tau_find_data::add_requests()
     // but is intended to speed up lookups
     for (auto i = m_results.begin()
         , end(m_results.end()); i != end
-        && m_invoke_count <= 2 * m_branch_factor;
+        && m_invoke_count < 2 * m_branch_factor;
         ++i)
     {
         observer* o = i->get();
