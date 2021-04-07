@@ -110,7 +110,7 @@ tau_find_data::tau_find_data(
     , m_token_callback(std::move(tcallback))
     , m_done(false)
 {
-    init();
+	init();
 }
 
 void tau_find_data::set_branch_factor(int branch_factor)
@@ -126,8 +126,7 @@ void tau_find_data::start()
     {
         std::vector<node_entry> nodes;
 
-        m_node.m_table.find_node(target(), nodes,
-            routing_table::include_failed, m_branch_factor);
+        m_node.m_table.find_node(target(), nodes, routing_table::include_failed);
 
         for (auto const& n : nodes)
         {
@@ -137,15 +136,12 @@ void tau_find_data::start()
 
 	// traversal_algorithm::start();
 
-    // in case the routing table is empty, use the
-    // router nodes in the table
-    if (aux::numeric_cast<std::int8_t>(m_results.size()) < m_branch_factor)
-    {
-        add_router_entries();
-    }
+	if (m_results.size() < 3) {
+		add_router_entries();
+	}
 
-    bool const is_done = add_requests();
-    if (is_done) done();
+	bool const is_done = add_requests();
+	if (is_done) done();
 }
 
 bool tau_find_data::add_requests()
@@ -159,6 +155,9 @@ bool tau_find_data::add_requests()
     // the current point we've reached in the search.
     int outstanding = 0;
 
+    // this only counts invoking requests for once calling this function.
+    int invokes = 0;
+
     // Find the first node that hasn't already been queried.
     // and make sure that the 'm_branch_factor' top nodes
     // stay queried at all times (obviously ignoring failed nodes)
@@ -169,7 +168,8 @@ bool tau_find_data::add_requests()
     // but is intended to speed up lookups
     for (auto i = m_results.begin()
         , end(m_results.end()); i != end
-        && m_invoke_count < 2 * m_branch_factor;
+        && invokes < 1
+        && m_invoke_count < (8 + m_branch_factor);
         ++i)
     {
         observer* o = i->get();
@@ -209,6 +209,7 @@ bool tau_find_data::add_requests()
             TORRENT_ASSERT(m_invoke_count < std::numeric_limits<std::int8_t>::max());
             ++m_invoke_count;
             ++outstanding;
+            ++invokes;
         }
         else
         {
@@ -216,9 +217,16 @@ bool tau_find_data::add_requests()
         }
     }
 
-    // if invoke count is 0, it means we didn't even find 'k'
-    // working nodes, we still have to terminate though.
-    return (outstanding == 0 && (m_responses + m_timeouts >= 2 * m_branch_factor))
+    // 1. m_responses + m_timeouts >= (8 + m_branch_factor)
+    //     we have invoked enough requests and all requests were all processed.
+    // 2. m_timeouts == m_invoke_count
+    //     all the requests were timeout.
+    // 3. m_responses + m_timeouts = m_results.size()
+    //     the total size of m_results is less than (8 + m_branch_factor)
+    //     and all requests were all processed.
+    // 4. if invoke count is 0, it means we didn't even find any
+    //     working nodes, we still have to terminate though.
+    return (outstanding == 0 && (m_responses + m_timeouts >= (8 + m_branch_factor)))
             || (outstanding == 0 && m_invoke_count != 0 && m_timeouts == m_invoke_count)
             || (outstanding == 0 && m_invoke_count != 0
                     && (m_responses + m_timeouts
