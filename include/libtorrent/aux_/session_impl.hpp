@@ -76,6 +76,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/peer_class_type_filter.hpp"
 #include "libtorrent/kademlia/dht_observer.hpp"
 #include "libtorrent/kademlia/dht_state.hpp"
+#include "libtorrent/kademlia/node_entry.hpp"
 #include "libtorrent/kademlia/announce_flags.hpp"
 #include "libtorrent/resolver.hpp"
 #include "libtorrent/invariant_check.hpp"
@@ -116,6 +117,7 @@ namespace libtorrent {
 namespace dht {
 
 	struct dht_tracker;
+	struct node_entry;
 	class item;
 
 }
@@ -1040,6 +1042,8 @@ namespace aux {
 #ifndef TORRENT_DISABLE_DHT
 			dht::dht_state m_dht_state;
 #endif
+            std::vector<dht::node_entry> m_live_nodes;
+            std::vector<dht::node_entry> m_replacements;
 
 			// this is initialized to the unchoke_interval
 			// session_setting and decreased every second.

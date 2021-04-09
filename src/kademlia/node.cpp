@@ -912,6 +912,14 @@ void node::status(session_status& s)
 }
 #endif
 
+void node::get_live_nodes(std::vector<node_entry>& live_nodes_existed){
+    m_table.get_live_nodes(live_nodes_existed);
+}
+
+void node::get_replacements(std::vector<node_entry>& replacements){
+    m_table.get_replacements(replacements);
+}
+
 bool node::lookup_peers(sha1_hash const& info_hash, entry& reply
 	, bool noseed, bool scrape, address const& requester) const
 {

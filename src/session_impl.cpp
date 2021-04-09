@@ -1916,8 +1916,19 @@ namespace {
 			expand_devices(ifs, eps);
 		}
 
-		auto remove_iter = partition_listen_sockets(eps, m_listen_sockets);
+        // get nodes existed from m_dht
+        if(m_dht){
 
+            m_dht->get_live_nodes(m_live_nodes);
+            m_dht->get_replacements(m_replacements);
+
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("add former nodes: live nodes: %d, replacements: %d\n", m_live_nodes.size(), m_replacements.size());
+#endif
+
+        }
+
+		auto remove_iter = partition_listen_sockets(eps, m_listen_sockets);
 		while (remove_iter != m_listen_sockets.end())
 		{
 #ifndef TORRENT_DISABLE_DHT
@@ -1945,6 +1956,10 @@ namespace {
 		// new and should post alerts
 		int const existing_sockets = int(m_listen_sockets.size());
 
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("former listen sockets: existing_sockets: %d\n", existing_sockets);
+#endif
+
 		m_stats_counters.set_value(counters::has_incoming_connections
 			, std::any_of(m_listen_sockets.begin(), m_listen_sockets.end()
 				, [](std::shared_ptr<listen_socket_t> const& l)
@@ -1969,7 +1984,20 @@ namespace {
 					&& s->ssl != transport::ssl
 					&& !(s->flags & listen_socket_t::local_network))
 				{
-					m_dht->new_socket(m_listen_sockets.back());
+					//m_dht->new_socket(m_listen_sockets.back());
+                    if(m_live_nodes.size() > 0 || m_replacements.size() > 0) 
+                    {
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("reopen listen sockets, new_socket_with_nodes");
+#endif
+					    m_dht->new_socket_with_nodes(m_listen_sockets.back(), m_live_nodes, m_replacements);
+                    } else {
+
+#ifndef TORRENT_DISABLE_LOGGING
+		session_log("reopen listen sockets, new_socket");
+#endif
+					    m_dht->new_socket(m_listen_sockets.back());
+                    }
 				}
 #endif
 

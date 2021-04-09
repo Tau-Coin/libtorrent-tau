@@ -177,7 +177,7 @@ namespace alert_category {
 	// interpreted as -1. For instance, boost.python
 	// does that and fails when assigning it to an
 	// unsigned parameter.
-	constexpr alert_category_t all = alert_category_t::all();
+	 //deleted temporarily because it is defined twice
 
 } // namespace alert_category
 

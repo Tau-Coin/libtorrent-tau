@@ -293,6 +293,32 @@ void routing_table::status(std::vector<dht_routing_bucket>& s) const
 	}
 }
 
+void routing_table::get_live_nodes(std::vector<node_entry>& live_nodes) {
+	for (auto const& i : m_buckets)
+	{
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
+		{
+			m_log->log(dht_logger::routing_table, "live_nodes: %d" , i.live_nodes.size());
+		}
+#endif
+		live_nodes.insert(live_nodes.end(), i.live_nodes.begin(), i.live_nodes.end());
+	}
+}
+
+void routing_table::get_replacements(std::vector<node_entry>& replacements) {
+	for (auto const& i : m_buckets)
+	{
+#ifndef TORRENT_DISABLE_LOGGING
+		if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
+		{
+			m_log->log(dht_logger::routing_table, "replacements: %d" , i.replacements.size());
+		}
+#endif
+		replacements.insert(replacements.end(), i.replacements.begin(), i.replacements.end());
+	}
+}
+
 #if TORRENT_ABI_VERSION == 1
 // TODO: 2 use the non deprecated function instead of this one
 void routing_table::status(session_status& s) const

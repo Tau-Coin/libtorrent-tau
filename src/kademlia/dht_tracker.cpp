@@ -114,12 +114,49 @@ namespace libtorrent { namespace dht {
 		update_storage_node_ids();
 	}
 
+    void dht_tracker::new_socket_with_nodes(aux::listen_socket_handle const &s, std::vector<node_entry> live_nodes, std::vector<node_entry> replacements) {
+
+		address const local_address = s.get_local_endpoint().address();
+		auto stored_nid = std::find_if(m_state.nids.begin(), m_state.nids.end()
+			, [&](node_ids_t::value_type const& nid) { return nid.first == local_address; });
+		node_id const nid = stored_nid != m_state.nids.end() ? stored_nid->second : node_id();
+
+		// must use piecewise construction because tracker_node::connection_timer
+		// is neither copyable nor movable
+		auto n = m_nodes.emplace(std::piecewise_construct_t(), std::forward_as_tuple(s)
+			, std::forward_as_tuple(get_io_service(m_key_refresh_timer)
+			, s, this, m_settings, nid, m_log, m_counters
+			, std::bind(&dht_tracker::get_node, this, _1, _2)
+			, m_storage));
+
+		if (n.second)
+		{
+			ADD_OUTSTANDING_ASYNC("dht_tracker::connection_timeout");
+			error_code ec;
+
+			n.first->second.connection_timer.expires_from_now(seconds(1), ec);
+			n.first->second.connection_timer.async_wait(
+				std::bind(&dht_tracker::connection_timeout, self(), n.first->first, _1));
+
+            //node_seen from old buckets live_nodes
+            for(auto le: live_nodes)
+                n.first->second.dht.m_table.add_node(le);
+
+            //heard_about from old buckets live_nodes
+            for(auto re: replacements)
+                n.first->second.dht.m_table.add_node(re);
+
+		}
+
+    }
+
 	void dht_tracker::new_socket(aux::listen_socket_handle const& s)
 	{
 		address const local_address = s.get_local_endpoint().address();
 		auto stored_nid = std::find_if(m_state.nids.begin(), m_state.nids.end()
 			, [&](node_ids_t::value_type const& nid) { return nid.first == local_address; });
 		node_id const nid = stored_nid != m_state.nids.end() ? stored_nid->second : node_id();
+
 		// must use piecewise construction because tracker_node::connection_timer
 		// is neither copyable nor movable
 		auto n = m_nodes.emplace(std::piecewise_construct_t(), std::forward_as_tuple(s)
@@ -230,6 +267,21 @@ namespace libtorrent { namespace dht {
 		for (auto& n : m_nodes)
 			add_dht_counters(n.second.dht, c);
 	}
+
+    void dht_tracker::get_live_nodes(std::vector<node_entry>& live_nodes_existed){
+		for (auto& n : m_nodes) {
+
+#ifndef TORRENT_DISABLE_LOGGING
+		m_log->log(dht_logger::tracker, "*** add new live nodes***");
+#endif
+			n.second.dht.get_live_nodes(live_nodes_existed);
+        }
+    }
+
+    void dht_tracker::get_replacements(std::vector<node_entry>& replacements){
+		for (auto& n : m_nodes)
+			n.second.dht.get_replacements(replacements);
+    }
 
 	void dht_tracker::connection_timeout(aux::listen_socket_handle const& s, error_code const& e)
 	{
