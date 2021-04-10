@@ -388,18 +388,20 @@ time_duration rpc_manager::tick()
 {
 	INVARIANT_CHECK;
 
-	constexpr int short_timeout = 1;
+	// milliseconds
+	constexpr int short_timeout = 300;
     // Modified by TAU community.
+	// seconds
 	constexpr int timeout = 15;
 
 	// look for observers that have timed out
 
-	if (m_transactions.empty()) return seconds(short_timeout);
+	if (m_transactions.empty()) return milliseconds(short_timeout);
 
 	std::vector<observer_ptr> timeouts;
 	std::vector<observer_ptr> short_timeouts;
 
-	time_duration ret = seconds(short_timeout);
+	time_duration ret = milliseconds(short_timeout);
 	time_point now = aux::time_now();
 
 	for (auto i = m_transactions.begin(); i != m_transactions.end();)
@@ -424,7 +426,7 @@ time_duration rpc_manager::tick()
 
 		// don't call short_timeout() again if we've
 		// already called it once
-		if (diff >= seconds(short_timeout) && !o->has_short_timeout())
+		if (diff >= milliseconds(short_timeout) && !o->has_short_timeout())
 		{
 #ifndef TORRENT_DISABLE_LOGGING
 			if (m_log->should_log(dht_logger::rpc_manager))
