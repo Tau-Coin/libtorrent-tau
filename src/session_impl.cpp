@@ -1923,12 +1923,13 @@ namespace {
             m_dht->get_replacements(m_replacements);
 
 #ifndef TORRENT_DISABLE_LOGGING
-		session_log("add former nodes: live nodes: %d, replacements: %d\n", m_live_nodes.size(), m_replacements.size());
+		session_log("add former nodes: live nodes: %lu, replacements: %lu\n", m_live_nodes.size(), m_replacements.size());
 #endif
 
         }
 
-		auto remove_iter = partition_listen_sockets(eps, m_listen_sockets);
+		//auto remove_iter = partition_listen_sockets(eps, m_listen_sockets);
+		auto remove_iter = m_listen_sockets.begin();
 		while (remove_iter != m_listen_sockets.end())
 		{
 #ifndef TORRENT_DISABLE_DHT
@@ -1988,13 +1989,15 @@ namespace {
                     if(m_live_nodes.size() > 0 || m_replacements.size() > 0) 
                     {
 #ifndef TORRENT_DISABLE_LOGGING
-		session_log("reopen listen sockets, new_socket_with_nodes");
+		session_log("reopen listen sockets listener: %s new_socket_with_nodes device: %s",
+					print_endpoint(ep.addr, ep.port).c_str() , ep.device.c_str());
 #endif
 					    m_dht->new_socket_with_nodes(m_listen_sockets.back(), m_live_nodes, m_replacements);
                     } else {
 
 #ifndef TORRENT_DISABLE_LOGGING
 		session_log("reopen listen sockets, new_socket");
+		session_log("setup_listener(%s) device: %s" , print_endpoint(ep.addr, ep.port).c_str() , ep.device.c_str());
 #endif
 					    m_dht->new_socket(m_listen_sockets.back());
                     }

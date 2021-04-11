@@ -1042,8 +1042,8 @@ namespace aux {
 #ifndef TORRENT_DISABLE_DHT
 			dht::dht_state m_dht_state;
 #endif
-            std::vector<dht::node_entry> m_live_nodes;
-            std::vector<dht::node_entry> m_replacements;
+            std::set<dht::node_entry> m_live_nodes;
+            std::set<dht::node_entry> m_replacements;
 
 			// this is initialized to the unchoke_interval
 			// session_setting and decreased every second.

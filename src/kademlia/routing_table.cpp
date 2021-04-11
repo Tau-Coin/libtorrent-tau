@@ -293,29 +293,29 @@ void routing_table::status(std::vector<dht_routing_bucket>& s) const
 	}
 }
 
-void routing_table::get_live_nodes(std::vector<node_entry>& live_nodes) {
+void routing_table::get_live_nodes(std::set<node_entry>& live_nodes) {
 	for (auto const& i : m_buckets)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
 		if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
 		{
-			m_log->log(dht_logger::routing_table, "live_nodes: %d" , i.live_nodes.size());
+			m_log->log(dht_logger::routing_table, "get live_nodes: %lu" , i.live_nodes.size());
 		}
 #endif
-		live_nodes.insert(live_nodes.end(), i.live_nodes.begin(), i.live_nodes.end());
+		live_nodes.insert(i.live_nodes.begin(), i.live_nodes.end());
 	}
 }
 
-void routing_table::get_replacements(std::vector<node_entry>& replacements) {
+void routing_table::get_replacements(std::set<node_entry>& replacements) {
 	for (auto const& i : m_buckets)
 	{
 #ifndef TORRENT_DISABLE_LOGGING
 		if (m_log != nullptr && m_log->should_log(dht_logger::routing_table))
 		{
-			m_log->log(dht_logger::routing_table, "replacements: %d" , i.replacements.size());
+			m_log->log(dht_logger::routing_table, "get replacements: %lu" , i.replacements.size());
 		}
 #endif
-		replacements.insert(replacements.end(), i.replacements.begin(), i.replacements.end());
+		replacements.insert(i.replacements.begin(), i.replacements.end());
 	}
 }
 

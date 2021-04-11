@@ -114,7 +114,7 @@ namespace libtorrent { namespace dht {
 		update_storage_node_ids();
 	}
 
-    void dht_tracker::new_socket_with_nodes(aux::listen_socket_handle const &s, std::vector<node_entry> live_nodes, std::vector<node_entry> replacements) {
+    void dht_tracker::new_socket_with_nodes(aux::listen_socket_handle const &s, std::set<node_entry> live_nodes, std::set<node_entry> replacements) {
 
 		address const local_address = s.get_local_endpoint().address();
 		auto stored_nid = std::find_if(m_state.nids.begin(), m_state.nids.end()
@@ -129,7 +129,7 @@ namespace libtorrent { namespace dht {
 			, std::bind(&dht_tracker::get_node, this, _1, _2)
 			, m_storage));
 
-		if (n.second)
+		if (m_running && n.second)
 		{
 			ADD_OUTSTANDING_ASYNC("dht_tracker::connection_timeout");
 			error_code ec;
@@ -268,17 +268,13 @@ namespace libtorrent { namespace dht {
 			add_dht_counters(n.second.dht, c);
 	}
 
-    void dht_tracker::get_live_nodes(std::vector<node_entry>& live_nodes_existed){
+    void dht_tracker::get_live_nodes(std::set<node_entry>& live_nodes_existed){
 		for (auto& n : m_nodes) {
-
-#ifndef TORRENT_DISABLE_LOGGING
-		m_log->log(dht_logger::tracker, "*** add new live nodes***");
-#endif
 			n.second.dht.get_live_nodes(live_nodes_existed);
         }
     }
 
-    void dht_tracker::get_replacements(std::vector<node_entry>& replacements){
+    void dht_tracker::get_replacements(std::set<node_entry>& replacements){
 		for (auto& n : m_nodes)
 			n.second.dht.get_replacements(replacements);
     }

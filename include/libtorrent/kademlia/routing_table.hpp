@@ -157,8 +157,8 @@ public:
 
 	void status(std::vector<dht_routing_bucket>& s) const;
 
-    void get_live_nodes(std::vector<node_entry>& live_nodes);
-	void get_replacements(std::vector<node_entry>& replacements);
+    void get_live_nodes(std::set<node_entry>& live_nodes);
+	void get_replacements(std::set<node_entry>& replacements);
 
 	void node_failed(node_id const& id, udp::endpoint const& ep);
 

@@ -98,7 +98,7 @@ namespace libtorrent { namespace dht {
 		void update_node_id(aux::listen_socket_handle const& s);
 
 		void new_socket(aux::listen_socket_handle const& s);
-		void new_socket_with_nodes(aux::listen_socket_handle const& s, std::vector<node_entry> live_nodes, std::vector<node_entry> replacements);
+		void new_socket_with_nodes(aux::listen_socket_handle const& s, std::set<node_entry> live_nodes, std::set<node_entry> replacements);
 		void delete_socket(aux::listen_socket_handle const& s);
 
 		void add_node(udp::endpoint const& node);
@@ -151,8 +151,8 @@ namespace libtorrent { namespace dht {
 			, std::vector<dht_lookup>& requests);
 		void update_stats_counters(counters& c) const;
 
-		void get_live_nodes(std::vector<node_entry>& live_nodes);
-		void get_replacements(std::vector<node_entry>& replacements);
+		void get_live_nodes(std::set<node_entry>& live_nodes);
+		void get_replacements(std::set<node_entry>& replacements);
 
 		void incoming_error(error_code const& ec, udp::endpoint const& ep);
 		bool incoming_packet(aux::listen_socket_handle const& s

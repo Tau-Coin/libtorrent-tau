@@ -199,8 +199,8 @@ public:
 	void status(libtorrent::session_status& s);
 #endif
 
-    void get_live_nodes(std::vector<node_entry>& live_nodes);
-	void get_replacements(std::vector<node_entry>& replacements);
+    void get_live_nodes(std::set<node_entry>& live_nodes);
+	void get_replacements(std::set<node_entry>& replacements);
 
 	dht::settings const& settings() const { return m_settings; }
 	counters& stats_counters() const { return m_counters; }
