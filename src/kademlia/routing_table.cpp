@@ -915,8 +915,8 @@ ip_ok:
 	}
 
 	if (rb.empty()) rb.reserve(m_bucket_size);
-	//rb.push_back(e);
-	//m_ips.insert(e.addr());
+	rb.push_back(e);
+	m_ips.insert(e.addr());
 	return node_added;
 }
 
