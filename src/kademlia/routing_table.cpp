@@ -894,7 +894,8 @@ ip_ok:
 		return node_added;
 	}
 
-	if (int(rb.size()) >= m_bucket_size)
+	//if (int(rb.size()) >= m_bucket_size)
+	if (int(rb.size()) >= 1024)
 	{
 		// if the replacement bucket is full, remove the oldest entry
 		// but prefer nodes that haven't been pinged, since they are
@@ -914,7 +915,8 @@ ip_ok:
 		rb.erase(j);
 	}
 
-	if (rb.empty()) rb.reserve(m_bucket_size);
+	//if (rb.empty()) rb.reserve(m_bucket_size);
+	if (rb.empty()) rb.reserve(1024);
 	rb.push_back(e);
 	m_ips.insert(e.addr());
 	return node_added;
