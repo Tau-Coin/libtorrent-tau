@@ -234,6 +234,58 @@ bool tau_find_data::add_requests()
             || m_invoke_count == 0;
 }
 
+void tau_find_data::traverse(node_id const& id, udp::endpoint const& addr)
+{
+    if (m_done) return;
+
+#ifndef TORRENT_DISABLE_LOGGING
+    dht_observer* logger = get_node().observer();
+    if (logger != nullptr && logger->should_log(dht_logger::traversal) && id.is_all_zeros())
+    {
+        logger->log(dht_logger::traversal
+            , "[%u] WARNING node returned a list which included a node with id 0"
+            , m_id);
+    }
+#endif
+
+    // let the routing table know this node may exist
+    m_node.m_table.heard_about(id, addr);
+
+    // add
+    std::set<node_entry> rb;
+    m_node.m_table.get_replacements(rb);
+
+    node_entry * existing;
+    std::tie(existing, std::ignore, std::ignore) = m_node.m_table.find_node(addr);
+
+#ifndef TORRENT_DISABLE_LOGGING
+	//dht_observer* logger = get_node().observer();
+	if (logger != nullptr && logger->should_log(dht_logger::traversal))
+	{
+		if (existing != nullptr)
+		{
+            existing->referred();
+            logger->log(dht_logger::traversal
+                , "[%u] NODE id: %s addr: %s distance: %d refer-fail-count: %d type: %s"
+                , m_id, aux::to_hex(id).c_str(), print_endpoint(addr).c_str()
+                , distance_exp(m_target, id), existing->refer_failed_count(), name());
+        }
+		else
+		{
+            logger->log(dht_logger::traversal
+                , "[%u] NODE id: %s addr: %s not found, type: %s"
+                , m_id, aux::to_hex(id).c_str(), print_endpoint(addr).c_str()
+                , name());
+		}
+	}
+#endif
+
+	if (existing == nullptr || existing->refer_failed_count() < 5)
+	{
+		add_entry(id, addr, {});
+	}
+}
+
 void tau_find_data::finished(observer_ptr o)
 {
 #if TORRENT_USE_ASSERTS
@@ -286,6 +338,13 @@ void tau_find_data::failed(observer_ptr o, traversal_flags_t const flags)
 #endif
 
         ++m_timeouts;
+
+        node_entry * existing;
+        std::tie(existing, std::ignore, std::ignore) = m_node.m_table.find_node(o->target_ep());
+        if (existing != nullptr)
+        {
+            existing->referred_failed();
+        }
     }
 
     bool const is_done = add_requests();

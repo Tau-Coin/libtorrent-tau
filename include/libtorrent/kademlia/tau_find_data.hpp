@@ -74,6 +74,8 @@ struct tau_find_data : traversal_algorithm
 
 	void set_branch_factor(int branch_factor);
 
+	void traverse(node_id const& id, udp::endpoint const& addr) override;
+
     void finished(observer_ptr o) override;
 
     void failed(observer_ptr o, traversal_flags_t flags = {}) override;

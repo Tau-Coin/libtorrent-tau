@@ -66,6 +66,12 @@ struct TORRENT_EXTRA_EXPORT node_entry
 		return std::make_tuple(!verified, rtt) < std::make_tuple(!rhs.verified, rhs.rtt);
 	}
 
+    void referred() { referred_count++; }
+    int refer_count() { return referred_count; }
+
+    void referred_failed() { referred_fail_count++; }
+    int refer_failed_count() { return referred_fail_count; }
+
 #ifndef TORRENT_DISABLE_LOGGING
 	time_point first_seen = aux::time_now();
 #endif
@@ -86,6 +92,11 @@ struct TORRENT_EXTRA_EXPORT node_entry
 	std::uint8_t timeout_count = 0xff;
 
 	bool verified = false;
+
+    // Added by TAU community.
+    int referred_count = 0;
+
+    int referred_fail_count = 0;
 };
 
 } } // namespace libtorrent::dht

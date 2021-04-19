@@ -58,7 +58,7 @@ using traversal_flags_t = libtorrent::flags::bitfield_flag<std::uint8_t, struct 
 struct TORRENT_EXTRA_EXPORT traversal_algorithm
 	: std::enable_shared_from_this<traversal_algorithm>
 {
-	void traverse(node_id const& id, udp::endpoint const& addr);
+	virtual void traverse(node_id const& id, udp::endpoint const& addr);
 
     // Modified by TAU community.
     virtual void finished(observer_ptr o);
