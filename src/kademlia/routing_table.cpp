@@ -690,9 +690,10 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 		{
 			// if the node ID is the same, just update the failcount
 			// and be done with it.
-			existing->timeout_count = 0;
+			//existing->timeout_count = 0;
 			if (e.pinged())
 			{
+			    existing->timeout_count = 0;
 				existing->update_rtt(e.rtt);
 				existing->last_queried = e.last_queried;
 			}
@@ -793,8 +794,10 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 			return failed_to_add;
 
 		TORRENT_ASSERT(j->id == e.id && j->ep() == e.ep());
-		j->timeout_count = 0;
-		j->update_rtt(e.rtt);
+        if(e.pinged()) {
+		    j->update_rtt(e.rtt);
+		    j->timeout_count = 0;
+        }
         /*
 		e = *j;
 		m_ips.erase(j->addr());
