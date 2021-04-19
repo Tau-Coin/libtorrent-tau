@@ -795,9 +795,12 @@ routing_table::add_node_status_t routing_table::add_node_impl(node_entry e)
 		TORRENT_ASSERT(j->id == e.id && j->ep() == e.ep());
 		j->timeout_count = 0;
 		j->update_rtt(e.rtt);
+        /*
 		e = *j;
 		m_ips.erase(j->addr());
 		rb.erase(j);
+        */
+		return node_added;
 	}
 
 	if (m_settings.restrict_routing_ips)
