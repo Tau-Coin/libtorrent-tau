@@ -280,7 +280,7 @@ void tau_find_data::traverse(node_id const& id, udp::endpoint const& addr)
 	}
 #endif
 
-	if (existing == nullptr || existing->refer_failed_count() < 5)
+	if (existing != nullptr && existing->refer_failed_count() < 5)
 	{
 		add_entry(id, addr, {});
 	}
