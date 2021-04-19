@@ -2025,6 +2025,11 @@ namespace {
 #endif // BOOST_NO_EXCEPTIONS
 		}
 
+
+        // clear former nodes
+        m_live_nodes.clear();
+        m_replacements.clear();
+
 		if (m_listen_sockets.empty())
 		{
 #ifndef TORRENT_DISABLE_LOGGING
