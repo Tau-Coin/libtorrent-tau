@@ -389,10 +389,10 @@ time_duration rpc_manager::tick()
 	INVARIANT_CHECK;
 
 	// milliseconds
-	constexpr int short_timeout = 1000;
+	constexpr int short_timeout = 1500;
     // Modified by TAU community.
 	// seconds
-	constexpr int timeout = 15;
+	constexpr int timeout = 10;
 
 	// look for observers that have timed out
 
