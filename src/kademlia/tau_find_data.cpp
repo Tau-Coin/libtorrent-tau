@@ -38,6 +38,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <libtorrent/kademlia/node.hpp>
 #include <libtorrent/kademlia/dht_observer.hpp>
 #include <libtorrent/io.hpp>
+#include <libtorrent/random.hpp>
 #include <libtorrent/socket.hpp>
 #include <libtorrent/socket_io.hpp>
 
@@ -144,9 +145,13 @@ void tau_find_data::start()
 	if (is_done) done();
 }
 
+/*
 bool tau_find_data::add_requests()
 {
     if (m_done) return true;
+
+    // invoke count limit: alpha + beta
+    constexpr int beta = 1;
 
     // this only counts outstanding requests at the top of the
     // target list. This is <= m_invoke count. m_invoke_count
@@ -169,7 +174,7 @@ bool tau_find_data::add_requests()
     for (auto i = m_results.begin()
         , end(m_results.end()); i != end
         && invokes < 1
-        && m_invoke_count < (8 + m_branch_factor);
+        && m_invoke_count < (beta + m_branch_factor);
         ++i)
     {
         observer* o = i->get();
@@ -226,7 +231,149 @@ bool tau_find_data::add_requests()
     //     and all requests were all processed.
     // 4. if invoke count is 0, it means we didn't even find any
     //     working nodes, we still have to terminate though.
-    return (outstanding == 0 && (m_responses + m_timeouts >= (8 + m_branch_factor)))
+    return (outstanding == 0 && (m_responses + m_timeouts >= (beta + m_branch_factor)))
+            || (outstanding == 0 && m_invoke_count != 0 && m_timeouts == m_invoke_count)
+            || (outstanding == 0 && m_invoke_count != 0
+                    && (m_responses + m_timeouts
+                            == aux::numeric_cast<std::int16_t>(m_results.size())))
+            || m_invoke_count == 0;
+}
+*/
+
+bool tau_find_data::add_requests()
+{
+    if (m_done) return true;
+
+    // invoke count limit: alpha + beta
+    constexpr int beta = 1;
+
+    // this only counts outstanding requests at the top of the
+    // target list. This is <= m_invoke count. m_invoke_count
+    // is the total number of outstanding requests, including
+    // old ones that may be waiting on nodes much farther behind
+    // the current point we've reached in the search.
+    int outstanding = 0;
+
+    int invoke_range = beta + m_branch_factor > 8 ? int(beta + m_branch_factor) : 8;
+
+    int has_invoked = 0;
+
+    // if the first 'invoke_range' nodes are all invoked, just return true;
+    int j = 0;
+
+    if (m_invoke_count < (beta + m_branch_factor))
+    {
+        for (auto i = m_results.begin(), end(m_results.end());
+            i != end && j < invoke_range;
+            ++i)
+        {
+            j++;
+
+            observer* o = i->get();
+            if (o->flags & observer::flag_alive)
+            {
+                TORRENT_ASSERT(o->flags & observer::flag_queried);
+                has_invoked++;
+                continue;
+            }
+            if (o->flags & observer::flag_queried)
+            {
+                // if it's queried, not alive and not failed, it
+                // must be currently in flight
+                if (!(o->flags & observer::flag_failed))
+                    ++outstanding;
+
+                has_invoked++;
+                continue;
+            }
+        }
+
+        if (outstanding == 0
+            && (has_invoked >= invoke_range || has_invoked == int(m_results.size())))
+        {
+            return true;
+        }
+        else if (outstanding != 0
+            && (has_invoked >= invoke_range || has_invoked == int(m_results.size())))
+        {
+            return false;
+        }
+    }
+
+    // this only counts invoking requests for once calling this function.
+    int invokes = 0;
+
+    std::uint32_t random_max = int(m_results.size()) >= invoke_range ?
+        std::uint32_t(invoke_range) - 1 : std::uint32_t(m_results.size()) - 1;
+
+    // Find the first node that hasn't already been queried.
+    // and make sure that the 'm_branch_factor' top nodes
+    // stay queried at all times (obviously ignoring failed nodes)
+    // and without surpassing the 'result_target' nodes (i.e. k=8)
+    // this is a slight variation of the original paper which instead
+    // limits the number of outstanding requests, this limits the
+    // number of good outstanding requests. It will use more traffic,
+    // but is intended to speed up lookups
+    while (invokes < 1
+        && m_invoke_count < (beta + m_branch_factor)
+        && m_responses + m_timeouts + outstanding
+                < (aux::numeric_cast<std::int16_t>(m_results.size()))
+    )
+    {
+        // generate random
+        std::uint32_t const r = random(random_max);
+        observer* o = (m_results.begin() + r)->get();
+
+        if (o->flags & observer::flag_alive)
+        {
+            TORRENT_ASSERT(o->flags & observer::flag_queried);
+            continue;
+        }
+
+        if (o->flags & observer::flag_queried)
+        {
+            continue;
+        }
+
+#ifndef TORRENT_DISABLE_LOGGING
+        dht_observer* logger = get_node().observer();
+        if (logger != nullptr && logger->should_log(dht_logger::traversal))
+        {
+            logger->log(dht_logger::traversal
+                , "[%u] INVOKE node-index: %d top-invoke-count: %d "
+                "invoke-count: %d branch-factor: %d "
+                "distance: %d id: %s addr: %s type: %s"
+                , m_id, r, outstanding, int(m_invoke_count)
+                , int(m_branch_factor)
+                , distance_exp(m_target, o->id()), aux::to_hex(o->id()).c_str()
+                , print_address(o->target_addr()).c_str(), name());
+        }
+#endif
+
+        o->flags |= observer::flag_queried;
+        if (invoke(*(m_results.begin() + r)))
+        {
+            TORRENT_ASSERT(m_invoke_count < std::numeric_limits<std::int8_t>::max());
+            ++m_invoke_count;
+            ++outstanding;
+            ++invokes;
+        }
+        else
+        {
+            o->flags |= observer::flag_failed;
+        }
+    }
+
+    // 1. m_responses + m_timeouts >= (8 + m_branch_factor)
+    //     we have invoked enough requests and all requests were all processed.
+    // 2. m_timeouts == m_invoke_count
+    //     all the requests were timeout.
+    // 3. m_responses + m_timeouts = m_results.size()
+    //     the total size of m_results is less than (8 + m_branch_factor)
+    //     and all requests were all processed.
+    // 4. if invoke count is 0, it means we didn't even find any
+    //     working nodes, we still have to terminate though.
+    return (outstanding == 0 && (m_responses + m_timeouts >= (beta + m_branch_factor)))
             || (outstanding == 0 && m_invoke_count != 0 && m_timeouts == m_invoke_count)
             || (outstanding == 0 && m_invoke_count != 0
                     && (m_responses + m_timeouts
@@ -264,11 +411,11 @@ void tau_find_data::traverse(node_id const& id, udp::endpoint const& addr)
 	{
 		if (existing != nullptr)
 		{
-            existing->referred();
             logger->log(dht_logger::traversal
-                , "[%u] NODE id: %s addr: %s distance: %d refer-fail-count: %d type: %s"
+                , "[%u] NODE id: %s addr: %s distance: %d allow-invoke: %s type: %s"
                 , m_id, aux::to_hex(id).c_str(), print_endpoint(addr).c_str()
-                , distance_exp(m_target, id), existing->refer_failed_count(), name());
+                , distance_exp(m_target, id)
+                , existing->allow_invoke() ? "true" : "false", name());
         }
 		else
 		{
@@ -280,7 +427,7 @@ void tau_find_data::traverse(node_id const& id, udp::endpoint const& addr)
 	}
 #endif
 
-	if (existing != nullptr && existing->refer_failed_count() < 5)
+	if (existing != nullptr && existing->allow_invoke())
 	{
 		add_entry(id, addr, {});
 	}
@@ -343,7 +490,7 @@ void tau_find_data::failed(observer_ptr o, traversal_flags_t const flags)
         std::tie(existing, std::ignore, std::ignore) = m_node.m_table.find_node(o->target_ep());
         if (existing != nullptr)
         {
-            existing->referred_failed();
+            existing->invoke_failed();
         }
     }
 
