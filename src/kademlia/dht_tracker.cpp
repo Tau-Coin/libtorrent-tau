@@ -548,13 +548,14 @@ namespace libtorrent { namespace dht {
 	bool dht_tracker::incoming_packet(aux::listen_socket_handle const& s
 		, udp::endpoint const& ep, span<char const> const buf)
 	{
+		int const buf_size = int(buf.size());
+
 		m_counters.inc_stats_counter(counters::dht_bytes_in, buf_size);
 		// account for IP and UDP overhead
 		m_counters.inc_stats_counter(counters::recv_ip_overhead_bytes
 			, is_v6(ep) ? 58 : 38);
 		m_counters.inc_stats_counter(counters::dht_messages_in);
 
-		int const buf_size = int(buf.size());
 		if (buf_size <= 20
 			|| buf.front() != 'd'
 			|| buf.back() != 'e') return false;
