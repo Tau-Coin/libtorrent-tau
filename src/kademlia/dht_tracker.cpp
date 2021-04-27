@@ -548,16 +548,16 @@ namespace libtorrent { namespace dht {
 	bool dht_tracker::incoming_packet(aux::listen_socket_handle const& s
 		, udp::endpoint const& ep, span<char const> const buf)
 	{
+		m_counters.inc_stats_counter(counters::dht_bytes_in, buf_size);
+		// account for IP and UDP overhead
+		m_counters.inc_stats_counter(counters::recv_ip_overhead_bytes
+			, is_v6(ep) ? 58 : 38);
+		m_counters.inc_stats_counter(counters::dht_messages_in);
+
 		int const buf_size = int(buf.size());
 		if (buf_size <= 20
 			|| buf.front() != 'd'
 			|| buf.back() != 'e') return false;
-
-		m_counters.inc_stats_counter(counters::dht_bytes_in, buf_size);
-		// account for IP and UDP overhead
-		m_counters.inc_stats_counter(counters::recv_ip_overhead_bytes
-			, is_v6(ep) ? 48 : 28);
-		m_counters.inc_stats_counter(counters::dht_messages_in);
 
 		if (m_settings.ignore_dark_internet && is_v4(ep))
 		{
@@ -749,7 +749,7 @@ namespace {
 		m_counters.inc_stats_counter(counters::dht_bytes_out, int(m_send_buf.size()));
 		// account for IP and UDP overhead
 		m_counters.inc_stats_counter(counters::sent_ip_overhead_bytes
-			, is_v6(addr) ? 48 : 28);
+			, is_v6(addr) ? 58 : 38);
 		m_counters.inc_stats_counter(counters::dht_messages_out);
 #ifndef TORRENT_DISABLE_LOGGING
 		m_log->log_packet(dht_logger::outgoing_message, m_send_buf, addr);
