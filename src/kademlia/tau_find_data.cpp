@@ -316,6 +316,7 @@ bool tau_find_data::add_requests()
     // but is intended to speed up lookups
     while (invokes < 1
         && m_invoke_count < (beta + m_branch_factor)
+        && m_invoke_count < (aux::numeric_cast<std::int16_t>(m_results.size()))
         && m_responses + m_timeouts + outstanding
                 < (aux::numeric_cast<std::int16_t>(m_results.size()))
     )
@@ -354,7 +355,6 @@ bool tau_find_data::add_requests()
         if (invoke(*(m_results.begin() + r)))
         {
             TORRENT_ASSERT(m_invoke_count < std::numeric_limits<std::int8_t>::max());
-            ++m_invoke_count;
             ++outstanding;
             ++invokes;
         }
@@ -362,6 +362,8 @@ bool tau_find_data::add_requests()
         {
             o->flags |= observer::flag_failed;
         }
+
+        ++m_invoke_count;
     }
 
     // 1. m_responses + m_timeouts >= (8 + m_branch_factor)
