@@ -361,6 +361,9 @@ bool tau_find_data::add_requests()
         else
         {
             o->flags |= observer::flag_failed;
+
+            if (!(o->flags & observer::flag_no_id))
+                m_node.m_table.node_failed(o->id(), o->target_ep());
         }
 
         ++m_invoke_count;
