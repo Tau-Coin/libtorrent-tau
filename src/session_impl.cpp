@@ -4663,6 +4663,28 @@ namespace {
 		}
 		m_disk_thread.update_stats_counters(m_stats_counters);
 
+        //reopen mechanism
+        int dht_bytes_in = m_stats_counters[counters::dht_bytes_in];
+        int dht_bytes_out = m_stats_counters[counters::dht_bytes_in];
+
+        if(m_dht_bytes_in != dht_bytes_in) {
+            m_dht_bytes_in = dht_bytes_in;
+            m_dht_speed_counter = 0;
+        }
+
+        if(m_dht_bytes_out != dht_bytes_out) {
+            m_dht_bytes_out = dht_bytes_out;
+            m_dht_speed_counter = 0;
+        }
+
+        if((m_dht_bytes_in > 0) || (m_dht_bytes_out > 0))
+            m_dht_speed_counter++;
+
+        if(m_dht_speed_counter > 10) {
+            reopen_listen_sockets(false);
+            m_dht_speed_counter = 0;
+        }
+
 #ifndef TORRENT_DISABLE_DHT
 		if (m_dht) {
             if(m_dht->get_nodes_size() == 0){
@@ -4685,6 +4707,7 @@ namespace {
 			, m_download_rate.queued_bytes());
 
 		m_alerts.emplace_alert<session_stats_alert>(m_stats_counters);
+
 	}
 
 	void session_impl::post_dht_stats()
