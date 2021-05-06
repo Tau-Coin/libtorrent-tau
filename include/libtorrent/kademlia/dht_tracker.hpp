@@ -160,6 +160,8 @@ namespace libtorrent { namespace dht {
 
 		std::vector<std::pair<node_id, udp::endpoint>> live_nodes(node_id const& nid);
 
+        int get_nodes_size();
+
 	private:
 		struct tracker_node
 		{

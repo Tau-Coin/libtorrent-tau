@@ -2027,8 +2027,8 @@ namespace {
 
 
         // clear former nodes
-        m_live_nodes.clear();
-        m_replacements.clear();
+        // m_live_nodes.clear();
+        // m_replacements.clear();
 
 		if (m_listen_sockets.empty())
 		{
@@ -4664,8 +4664,14 @@ namespace {
 		m_disk_thread.update_stats_counters(m_stats_counters);
 
 #ifndef TORRENT_DISABLE_DHT
-		if (m_dht)
-			m_dht->update_stats_counters(m_stats_counters);
+		if (m_dht) {
+            if(m_dht->get_nodes_size() == 0){
+		        m_stats_counters.set_value(counters::dht_nodes, m_live_nodes.size());
+		        m_stats_counters.set_value(counters::dht_node_cache, m_replacements.size());
+            } else { 
+			    m_dht->update_stats_counters(m_stats_counters);
+            }
+        }
 #endif
 
 		m_stats_counters.set_value(counters::limiter_up_queue
@@ -5766,7 +5772,12 @@ namespace {
 #ifndef TORRENT_DISABLE_DHT
 		if (m_dht)
 		{
-			m_dht->dht_status(s);
+            if(m_dht->get_nodes_size() == 0){
+	            s.dht_nodes = m_live_nodes.size();
+	            s.dht_node_cache = m_replacements.size();
+            } else { 
+			    m_dht->dht_status(s);
+            }
 		}
 		else
 #endif
