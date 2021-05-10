@@ -1045,12 +1045,6 @@ namespace aux {
             std::set<dht::node_entry> m_live_nodes;
             std::set<dht::node_entry> m_replacements;
 
-            // for reopen mechanism
-			int m_dht_speed_counter = 0;
-			int m_dht_bytes_in = -1;
-
-			int m_dht_bytes_out = -1;
-
 			// this is initialized to the unchoke_interval
 			// session_setting and decreased every second.
 			// when it reaches zero, it is reset to the
