@@ -520,6 +520,22 @@ namespace libtorrent { namespace dht {
 				, _1, _2, ctx, cb), data_cb, branch_factor);
 	}
 
+	// fills the vector with the count nodes from routing table buckets that
+	// are nearest to the given id.
+	void dht_tracker::find_node(sha1_hash const& id
+		, std::vector<node_entry>& l
+		, int count)
+	{
+		for (auto& n : m_nodes)
+			n.second.dht.find_node(id, l, count);
+	}
+
+	void dht_tracker::add_node(std::vector<node_entry>& l)
+	{
+		for (auto& n : m_nodes)
+			n.second.dht.add_node(l);
+	}
+
 	void dht_tracker::direct_request(udp::endpoint const& ep, entry& e
 		, std::function<void(msg const&)> f)
 	{

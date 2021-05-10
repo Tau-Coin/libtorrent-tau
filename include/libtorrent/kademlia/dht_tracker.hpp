@@ -140,6 +140,14 @@ namespace libtorrent { namespace dht {
 			, std::string salt = std::string()
 			, int branch_factor = 5);
 
+		// fills the vector with the count nodes from routing table buckets that
+		// are nearest to the given id.
+		void find_node(sha1_hash const& id
+			, std::vector<node_entry>& l
+			, int count = 0);
+
+		void add_node(std::vector<node_entry>& l);
+
 		// send an arbitrary DHT request directly to a node
 		void direct_request(udp::endpoint const& ep, entry& e
 			, std::function<void(msg const&)> f);

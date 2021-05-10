@@ -651,6 +651,28 @@ namespace {
 #endif
 	}
 
+	// fills the vector with the count nodes from routing table buckets that
+	// are nearest to the given id.
+	void session_handle::dht_find_node(sha1_hash const& id
+		, std::vector<libtorrent::dht::node_entry>& l
+		, int count)
+    {
+#ifndef TORRENT_DISABLE_DHT
+        sync_call(&session_impl::dht_find_node, id, &l, count);
+#else
+        TORRENT_UNUSED(id);
+#endif
+    }
+
+    void session_handle::dht_add_node(std::vector<libtorrent::dht::node_entry>& l)
+	{
+#ifndef TORRENT_DISABLE_DHT
+		async_call(&session_impl::dht_add_node, l);
+#else
+		TORRENT_UNUSED(l);
+#endif
+	}
+
 	void session_handle::dht_get_peers(sha1_hash const& info_hash)
 	{
 #ifndef TORRENT_DISABLE_DHT

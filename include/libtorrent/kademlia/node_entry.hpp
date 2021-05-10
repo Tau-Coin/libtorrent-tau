@@ -42,7 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace libtorrent { namespace dht {
 
-struct TORRENT_EXTRA_EXPORT node_entry
+struct TORRENT_EXPORT /*TORRENT_EXTRA_EXPORT*/ node_entry
 {
 	node_entry(node_id const& id_, udp::endpoint const& ep, int roundtriptime = 0xffff
 		, bool pinged = false);

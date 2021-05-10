@@ -494,6 +494,12 @@ namespace aux {
 				, std::string salt = std::string()
 				, int branch_factor = 5);
 
+			void dht_find_node(sha1_hash const& id
+				, std::vector<libtorrent::dht::node_entry>* l
+				, int count = 0);
+
+			void dht_add_node(std::vector<libtorrent::dht::node_entry>& l);
+
 			void dht_get_peers(sha1_hash const& info_hash);
 			void dht_announce(sha1_hash const& info_hash, int port = 0, dht::announce_flags_t flags = {});
 

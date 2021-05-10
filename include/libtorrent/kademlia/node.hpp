@@ -154,6 +154,14 @@ public:
 		, std::function<void(item&)> data_cb
 		, int branch_factor = 5);
 
+	// fills the vector with the count nodes from routing table buckets that
+	// are nearest to the given id.
+	void find_node(node_id const& id
+		, std::vector<node_entry>& l
+		, int count);
+
+	void add_node(std::vector<node_entry>& l);
+
 	void sample_infohashes(udp::endpoint const& ep, sha1_hash const& target
 		, std::function<void(time_duration
 			, int, std::vector<sha1_hash>

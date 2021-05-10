@@ -6142,6 +6142,21 @@ namespace {
 			, std::bind(&put_mutable_callback, _1, std::move(cb)), salt, branch_factor);
 	}
 
+	// Added by TAU.
+	void session_impl::dht_find_node(sha1_hash const& id
+		, std::vector<libtorrent::dht::node_entry>* l
+		, int count)
+	{
+		if (!m_dht) return;
+		m_dht->find_node(id, *l, count);
+	}
+
+	void session_impl::dht_add_node(std::vector<libtorrent::dht::node_entry>& l)
+	{
+		if (!m_dht) return;
+		m_dht->add_node(l);
+	}
+
 	void session_impl::dht_get_peers(sha1_hash const& info_hash)
 	{
 		if (!m_dht) return;

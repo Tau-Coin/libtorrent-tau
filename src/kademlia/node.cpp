@@ -705,6 +705,37 @@ void node::put_item(public_key const& pk, std::string const& salt
     ta->set_branch_factor(branch_factor);
     ta->start();
 }
+
+// fills the vector with the count nodes from routing table buckets that
+// are nearest to the given id.
+void node::find_node(node_id const& id
+	, std::vector<node_entry>& l
+	, int count)
+{
+	m_table.find_node(id, l, routing_table::include_failed, count);
+
+#ifndef TORRENT_DISABLE_LOGGING
+    if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+    {
+        m_observer->log(dht_logger::node, "find node for [ hash: %s nodes:%d ]"
+            , aux::to_hex(id).c_str(), int(l.size()));
+    }
+#endif
+}
+
+void node::add_node(std::vector<node_entry>& l)
+{
+#ifndef TORRENT_DISABLE_LOGGING
+    if (m_observer != nullptr && m_observer->should_log(dht_logger::node))
+    {
+        m_observer->log(dht_logger::node, "add nodes:%d ", int(l.size()));
+    }
+#endif
+
+	for (node_entry& n : l)
+		m_table.add_node(n);
+}
+
 // Added by TAU community end.
 
 void node::sample_infohashes(udp::endpoint const& ep, sha1_hash const& target

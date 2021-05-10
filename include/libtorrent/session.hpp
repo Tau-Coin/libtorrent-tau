@@ -42,6 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/kademlia/dht_settings.hpp"
 #include "libtorrent/kademlia/dht_state.hpp"
 #include "libtorrent/kademlia/dht_storage.hpp"
+#include "libtorrent/kademlia/node_entry.hpp"
 
 #if TORRENT_ABI_VERSION == 1
 #include "libtorrent/fingerprint.hpp"

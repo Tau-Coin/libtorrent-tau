@@ -50,6 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/kademlia/dht_storage.hpp"
 #include "libtorrent/kademlia/dht_settings.hpp"
 #include "libtorrent/kademlia/announce_flags.hpp"
+#include "libtorrent/kademlia/node_entry.hpp"
 
 #if TORRENT_ABI_VERSION == 1
 #include "libtorrent/session_settings.hpp"
@@ -471,6 +472,14 @@ namespace libtorrent {
 				, std::int64_t&, std::string const&)> cb
 			, std::string salt = std::string()
 			, int branch_factor = 5);
+
+		// fills the vector with the count nodes from routing table buckets that
+		// are nearest to the given id.
+		void dht_find_node(sha1_hash const& id
+			, std::vector<libtorrent::dht::node_entry>& l
+			, int count = 0);
+
+		void dht_add_node(std::vector<libtorrent::dht::node_entry>& l);
 
 		// ``dht_get_peers()`` will issue a DHT get_peer request to the DHT for the
 		// specified info-hash. The response (the peers) will be posted back in a
